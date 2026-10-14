@@ -1,0 +1,17 @@
+config,cfg_rank,cfg_form,cfg_rest,cfg_k,2.1 CV RMSE,2.1 CV R2,2.1 hold-out RMSE,2.2 CV RMSE,2.2 CV R2,2.2 hold-out RMSE,mean CV RMSE rank
+"rank=log, form=shrunk k=4, rest=sign",log,shrunk,sign,4,1.6191,0.2647,1.8688,1.2513,0.1591,1.1317,1.5
+"rank=log, form=shrunk k=2, rest=sign",log,shrunk,sign,2,1.6299,0.2547,1.8631,1.2513,0.1585,1.1265,3.0
+"rank=log, form=shrunk k=4, rest=raw",log,shrunk,raw,4,1.6118,0.2709,1.9081,1.2595,0.1488,1.1367,3.5
+"rank=log, form=shrunk k=2, rest=raw",log,shrunk,raw,2,1.6224,0.2612,1.9025,1.2594,0.1484,1.1318,4.0
+"rank=log, form=shrunk k=1, rest=sign",log,shrunk,sign,1,1.6419,0.2433,1.861,1.2517,0.1578,1.1235,4.5
+"rank=log, form=shrunk k=1, rest=raw",log,shrunk,raw,1,1.6342,0.2501,1.9006,1.2597,0.1479,1.129,6.0
+"rank=log, form=mean-fill, rest=sign",log,mean_fill,sign,0,1.6705,0.2152,1.8632,1.2528,0.156,1.1298,6.0
+"rank=log, form=mean-fill, rest=raw",log,mean_fill,raw,0,1.6623,0.2227,1.9038,1.2606,0.1463,1.1341,7.5
+"rank=raw, form=shrunk k=4, rest=sign",raw,shrunk,sign,4,1.6857,0.2018,2.2885,1.2703,0.1301,1.1577,11.5
+"rank=raw, form=shrunk k=1, rest=sign",raw,shrunk,sign,1,1.6963,0.1897,2.19,1.2695,0.1303,1.1456,11.5
+"rank=raw, form=shrunk k=2, rest=sign",raw,shrunk,sign,2,1.6905,0.1965,2.2331,1.2697,0.1304,1.1501,11.5
+"rank=raw, form=shrunk k=1, rest=raw",raw,shrunk,raw,1,1.6887,0.1969,2.2449,1.2762,0.122,1.1508,12.5
+"rank=raw, form=shrunk k=4, rest=raw",raw,shrunk,raw,4,1.6785,0.2084,2.3399,1.2773,0.1214,1.1622,12.5
+"rank=raw, form=shrunk k=2, rest=raw",raw,shrunk,raw,2,1.6831,0.2033,2.2863,1.2765,0.1219,1.1551,12.5
+"rank=raw, form=mean-fill, rest=sign",raw,mean_fill,sign,0,1.7125,0.1705,2.124,1.2699,0.1293,1.1478,13.5
+"rank=raw, form=mean-fill, rest=raw",raw,mean_fill,raw,0,1.7044,0.1783,2.1821,1.2764,0.1212,1.152,14.5
