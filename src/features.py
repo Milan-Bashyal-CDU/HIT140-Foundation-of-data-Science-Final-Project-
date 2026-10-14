@@ -52,8 +52,36 @@ FINAL = dict(rank="log", form="shrunk", rest="sign", k=4.0)   # chosen in experi
 
 
 def load_raw():
-    m = pd.read_csv(RAW / "wc2026_matches_104.csv", encoding="utf-8-sig", parse_dates=["date"])
-    r = pd.read_csv(RAW / "fifa_ranking_2026-06-11.csv", encoding="utf-8-sig")
+    try:
+        m = pd.read_csv(RAW / "wc2026_matches_104.csv", encoding="utf-8-sig")
+        r = pd.read_csv(RAW / "fifa_ranking_2026-06-11.csv", encoding="utf-8-sig")
+    except (OSError, pd.errors.ParserError, pd.errors.EmptyDataError) as exc:
+        raise ValueError(f"Could not load raw World Cup data: {exc}") from exc
+    match_columns = {"match_id", "date", "stage", "team_a", "team_b", "goals_a", "goals_b"}
+    rank_columns = {"team", "fifa_rank_2026_06_11"}
+    for name, frame, required in [("matches", m, match_columns), ("rankings", r, rank_columns)]:
+        missing = required - set(frame.columns)
+        if missing:
+            raise ValueError(f"{name} CSV is missing columns: {', '.join(sorted(missing))}")
+        if frame.empty or frame[list(required)].isna().any().any():
+            raise ValueError(f"{name} CSV has empty or missing required values")
+    if m.match_id.duplicated().any() or r.team.duplicated().any():
+        raise ValueError("Match IDs and ranking team names must be unique")
+    if (m.team_a == m.team_b).any():
+        raise ValueError("A match cannot have the same team on both sides")
+    try:
+        m["date"] = pd.to_datetime(m.date, errors="raise")
+        m[["goals_a", "goals_b"]] = m[["goals_a", "goals_b"]].apply(pd.to_numeric, errors="raise")
+        r["fifa_rank_2026_06_11"] = pd.to_numeric(r.fifa_rank_2026_06_11, errors="raise")
+    except (ValueError, TypeError) as exc:
+        raise ValueError(f"Invalid date, score, or FIFA ranking: {exc}") from exc
+    if ((m[["goals_a", "goals_b"]] < 0) | (m[["goals_a", "goals_b"]] % 1 != 0)).any().any():
+        raise ValueError("Scores must be non-negative whole numbers")
+    if (r.fifa_rank_2026_06_11 <= 0).any() or (r.fifa_rank_2026_06_11 % 1 != 0).any():
+        raise ValueError("FIFA rankings must be positive whole numbers")
+    missing_teams = (set(m.team_a) | set(m.team_b)) - set(r.team)
+    if missing_teams:
+        raise ValueError(f"Missing FIFA rankings for: {', '.join(sorted(missing_teams))}")
     return m.sort_values(["date", "match_id"]).reset_index(drop=True), \
         dict(zip(r.team, r.fifa_rank_2026_06_11))
 
@@ -104,6 +132,12 @@ def add_history(t, cfg):
 
 def build(cfg=None, save=False):
     cfg = {**DEFAULT, **(cfg or {})}
+    for option, allowed in {"rank": {"raw", "log"}, "form": {"mean_fill", "shrunk"},
+                            "rest": {"raw", "sign"}}.items():
+        if cfg[option] not in allowed:
+            raise ValueError(f"Invalid {option} option {cfg[option]!r}; choose from {sorted(allowed)}")
+    if not isinstance(cfg["k"], (int, float)) or not np.isfinite(cfg["k"]) or cfg["k"] <= 0:
+        raise ValueError("k must be a positive finite number")
     m, rank = load_raw()
     t = add_history(team_rows(m), cfg)
     t["rank"] = t.team.map(rank)
@@ -139,8 +173,10 @@ def build(cfg=None, save=False):
 
     for d, x in [(d21, X21), (d22, X22)]:
         d[x] = d[x].astype(float).round(4)
-        assert len(x) == 8 and not d[x].isna().any().any()
-    assert len(d21) == 104 and len(d22) == 208 and len(SHARED) <= 4
+        if len(x) != 8 or not np.isfinite(d[x].to_numpy()).all():
+            raise ValueError("Generated features must contain eight finite values per row")
+    if len(d21) != 104 or len(d22) != 208:
+        raise ValueError(f"Expected 104 matches and 208 team rows; got {len(d21)} and {len(d22)}")
     if save:
         PROCESSED.mkdir(parents=True, exist_ok=True)
         d21.to_csv(PROCESSED / "lr21_goal_difference.csv", index=False, encoding="utf-8-sig")
